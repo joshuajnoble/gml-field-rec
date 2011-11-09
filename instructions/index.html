@@ -1,0 +1,131 @@
+<html>
+<head>
+	<title>Making a GML Field Recorder</title>
+
+	<link rel="stylesheet" type="text/css" href="style.css" />
+</head>
+<body>
+
+<h1>Buying Stuff</h1>
+
+So you wanna make a field recorder. Great. First things first: you need to buy some electronics. The challenge says: 
+
+<p>
+<em>Material costs for the field device must not exceed 300 euros. Computers and equipment outside of the 300 euros can be used for non-field activities (such as downloading and manipulating data captured in-field), but at the time of capture a graffiti writer should have no more than 300 euros worth of equipment on him or herself.</em>
+</p>
+
+Let's make a list in US Dollars, so I don't have to convert back everything I bought from US suppliers. We've got ~420.39$US to spend, so let's spend it.
+<ul>
+<li>Teensy++2.0 $24</li>
+<li>ADNS5050 $1.47</li>
+<li>Ultrabright LED RED $4 <a href="http://www.sparkfun.com/products/9634">example</a></li>
+<li>2 100uF Ceramic Capacitors $1</li>
+<li>2 1mF Capacitors $1</li>
+<li>Some Wires $3</li>
+<li>Sparkfun 9DOF $99 <a href="http://www.sparkfun.com/products/10724">here</a></li>
+<li>2 LEDs $2</li>
+<li>1 PCF8883 Proximity sensor $2.80</li>
+<li>2 220uF Capacitors </li>
+<li>1 Camera lens ~$10 (for the camera)</li>
+<li>MicroSD card 2GB  $4</li>
+<li>1 3.3V Voltage Regulator $3</li>
+<li>MicroSD card holder $4 OR</li>
+<li>MicroSD card shield $10 <a href="http://www.sparkfun.com/products/544">here</a></li>
+<li>Aluminum Foil $1</li>
+<li>Pushbutton $1</li>
+</ul>
+
+<strong>= $178.27 or 127.22E</strong>
+<br/>
+Not too shabby. 
+<br/>
+Where can I get this stuff?
+<br/>
+<a href="http://www.sparkfun.com/">Sparkfun</a><br/>
+<a href="http://www.digikey.com/">DigiKey</a><br/>
+<a href="www.mouser.com">Mouser</a>
+
+<h1>How Does It Work?</h1>
+
+<p>Basic theory of operation goes like so: it's an optical mouse that knows how it's being tilted. We need to make sure that the mouse can read properly off the wall so we need to illuminate the wall properly, hence the ultra-bright Red LED. This one is 640nm, which is close enough to the 680nm that the ADNS5050 really wants. If you find a really bright 680nm LED that'll work even better. It needs to be big and bright though because we're working with a much larger area than the optical mouse is used to working with.</p>
+
+<p>We point the mouse sensor and lens and LED at the wall and we get tracking. Easy right? Not really. There's a lot of fussing around to get the lens mounted correctly and aimed correctly at the optical mouse senors actual optical sensor. I got a lens that was f3.8, which is pretty perfect for what I want to do. You might get a differetn one, but if it's possible, stick with f3.8. Some of the keychain cameras come with f4.7 which isn't really going to work as well. We want something close up.</p>
+
+<p>Making the lens mount is somewhat tricky and requires that you learn a little bit about the lens law depending on what the foal length of your lens is. As I mentioned, I'm using a f3.8 lens pulled out of a camera like the one shown below:</p>
+<p><img src="camera.png"/></p>
+
+The lens law looks like this:
+<p>
+<img src="lens.png"/>
+</p>
+
+<p>You can translate that as:
+1/distance from lens to focal plane + 1/distance from lens to object = 1/focal length.</p>
+
+<p>What that means is that whatever your lens is, f3.8, f4.9, whatever, you need to balance the equation with the reciprocal of the distance of the object to the lens plus the reciprocal of the distance of the lens to the focal plane. I've got mine set up a 5.25mm distance from between the lens and the ADNS5050 so that I can focus on things around 2.5cm away from the lens (do the math if you like). Whatever lens you decide to use, just make sure that the radius of the focal area is small. Those little keychain cameras are perfect, larger lenses, like the ones from the PS3 eye, aren't going to work. NOTE: the actual location of the optical sensor in the ADNS5050 is 2mm down from the top of the optical mouse sensor. See the picture here:</p>
+
+<p>
+<img src="adns5050_die_to_aperature.png"/>
+</p>
+
+So your actual distance from 
+
+<h1>Cutting Stuff Up</h1>
+
+<p>I cut the lens mount and the ADNS5050 holder out of 2mm acrylic on a cheap shitty laser cutter. Works like a dream. The illustrator file is included. The difficulty is positioning the lens just right so that it's 5.25mm from the optical mouse sensor.</p>
+
+<p>The lens mouse illustrator files are included as lens_mount.ai<br/>
+The body of the field recorder is shown in shape_pattern.ai<br/>
+It's fairly rough right now, v2 is going to have a better shaped body.</p>
+
+<h1>Putting It Together</h1>
+
+<p>The Teensy sits on the body, with all the wiring and a 9V battery. The lens+ADNS assembly slots into the little cutout at the end. Right now I have it so it's fit tight with the 2 sheets of 2mm acrylic that make up my assembly, but whatever holds it perpendicular to the wall and doesn't allow it to move is just fine. The body is then slid over the bottom of the spray paint can and taped into place (tape not neccessary, but recommended).
+</p>
+
+<p>The capacitive sensor uses a piece of foil to read the touches when the user is actually making a line. You should put near the top of the can so that it's easy to spray and signal to the recorder that you're making a line at the same time.</p>
+
+<h1>Using It</h1>
+
+<strong>Here's the manual:</strong>
+
+<ul>
+<li>Start up the field recorder by plugging in the battery.</li>
+<li>If the SD Card is full or there's another problem with it, the SD card LED is flashed 5 times to let you know. Otherwise, nothing happens.</li>
+<li>When you press the toggle button, you start recording a tag. The recording light won't actually go on until you press down on the capacitive sensor.</li>
+<li>When you press on the capacitive sensor the recording LED will go on to let you know that the stroke is being recorded. When it's released the recording LED goes out. This givs you an idea of what's going on in the recorder.</li>
+<li>As you move the recorder around it's important to keep it oriented perpendicular to the wall. The beta version of the software will be much better about allowing you to move the recorder around a little more but for the moment the mouse sensor is the only thing really recording the position, so it's important that it works well. Right now the sensor is 0.5 centimeter precise when used correctly, but I'm working on it, and hopefully I'll get to mm precision soonish. Just a little bit more math and noise filtering to use the 9DOF better. If you've set the lens so that it should be focused at 2cm, then make sure you keep it at 2cm. Again, this is going to get better in the v2 or beta release, or whatever, but tat the moment it's a bit naive, so bear that in mind when making a tag.</li>
+<li>When you're done with your tag simply press the button again and you'll see the tag light either blink 3 times for a happy write to file or 5 times for a failed write to file.</li>
+</ul>
+
+<h1>The Code</h1>
+
+<p>
+Most of the main application is contained in libraries. Everything in <em>/libs</em> goes in your Arduino/libraries<br/>
+You need to add one method to the WString class to get it work properly though:
+<br/>
+<span class="code">char* c_str() { return _buffer; }</span>
+<br/>
+this mimics the c++ string method. The WString.h lives where Arduino application lives, so Arduino/hardware/teensy/cores on Windows or Arduino.app/Resources/Java/hardware/teensy/cores on OSX. You can either add that manually or copy the files from <em>/additional</em>
+
+There are two extra config applications to help you position the lens correctly, an Arduino application and a Processing application. The P5 app just reads the pixels from the ADNS5050 so you can focus the lens, check your positioning and the distance from the lens to the mouse sensor.
+</p>
+
+
+
+<h1>The Future</h1>
+
+<ul>
+<li>As mentioned, I need to make a better body for the thing.</li>
+<li>Make a video.</li>
+<li>Try out some different optical sensors like the ADNS7550 or the ADNS9550 for higher resolution.</li>
+<li>I'm making an ipod/iPhone OF app that you can use with a simple chip plugged into the bottom of the iPhone to grab signals directly from the tagger and live log.</li>
+<li>Some kind of AR app that uses the GPS info to show wall histories. Nothing super special there, but I'm in design school so people love that shit.</li>
+<ul>
+
+<h1>DOWNLOAD</h1>
+
+<a href="http://thefactoryfactory.com/GML_FR.zip">HERE</a>
+
+</body>
+</html>
