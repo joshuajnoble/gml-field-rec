@@ -13,6 +13,7 @@
 #define __AVR_AT90__ 
 // #define __AVR_ATmega328P__ // Arduino Uno
 
+#define DEBUG
 
 //#define DEBUG
 #include "DebugUtils.h"
@@ -36,6 +37,8 @@ int state;
 #define TAGGING_DOWN 3
 #define FINISH_TAG 4
 
+long debounce;
+
 #define CAN_HEIGHT_600ML 28.4 // height of a 600ML molotow can in CM
 #define CAN_HEIGHT_12OZ 26
 
@@ -53,9 +56,14 @@ long tagStart;
 
 void setup()
 {
-
+  
+  Serial.begin( 9600 );
+  
+  Serial.println( " begin ");
+  
   pinMode(POWER, OUTPUT);
   digitalWrite(POWER, HIGH);
+  
   pinMode(TAG_PIN, INPUT);
   pinMode(DOWN_PIN, INPUT);
 
@@ -66,7 +74,15 @@ void setup()
   pinMode(TAGGING_LED, OUTPUT);
   pinMode(SDCARD_LED, OUTPUT);
 
+  Serial.println( " init GML ");
+
+  debounce = millis();
+
+  
   if(gml.init() != 1) { // i.e. if it fails
+    
+    Serial.println(" GML not intialized ");
+  
     int i;
     for(i = 0; i<5; i++) { // 5 blinks = not ok
       digitalWrite( SDCARD_LED, HIGH);
@@ -77,7 +93,7 @@ void setup()
   }
 
   state = INIT;
-
+  Serial.println(" INIT ");
 }
 
 
@@ -86,7 +102,13 @@ void loop()
 
   if(state == INIT)
   {
-    if(digitalRead(TAG_PIN)) {
+    
+    if(digitalRead(TAG_PIN) && millis() - debounce > 500) {
+      
+      debounce = millis();
+      
+      Serial.println(" start tagging ");
+      
       state = TAGGING;
       omouse.sync(); // this takes a second
       gml.beginDrawing();
@@ -103,41 +125,53 @@ void loop()
   else if (state == TAGGING)
   {
 
+    Serial.println(" TAGGING ");
+    
+    if(digitalRead(TAG_PIN) && millis() - debounce > 500) {
+      debounce = millis();
+      Serial.println(" tag pin ");
+      state = FINISH_TAG;
+    }
+    
     imu.getYawPitchRoll(ypr);
     determinePosition();
-
-    if(digitalRead(DOWN_PIN))
+ 
+    if(digitalRead(DOWN_PIN) && millis() - debounce > 500)
     {
+      debounce = millis();
+      digitalWrite(SDCARD_LED, HIGH);
       state = TAGGING_DOWN;
       gml.beginStroke();
     }
   }
   else if (state == TAGGING_DOWN)
   {
-
+    Serial.println(" TAGGING_DOWN ");
     determinePosition();
 
     if(!digitalRead(DOWN_PIN))
     {
+      digitalWrite(SDCARD_LED, LOW);
+      debounce = millis();
       state = TAGGING;
       gml.endStroke();
     }
     else
     {
-      // figure out point
-      //position[0] += omouse.dx(); // mod these w/DCM vals
-      //position[1] += omouse.dx();
       gml.addPoint(position[0], position[1], millis() - tagStart);
     }
   }
   else if(state == FINISH_TAG)
   {
+    //if(gml.endDrawing()) {
+      
+    digitalWrite( LASER_1, LOW );
+    digitalWrite( LASER_2, LOW );
+    digitalWrite( ILLUMINATION_LED, LOW );
+      
     if(gml.endDrawing()) {
-
-      digitalWrite( LASER_1, LOW );
-      digitalWrite( LASER_2, LOW );
-      digitalWrite( ILLUMINATION_LED, LOW );
-
+      
+      Serial.println(" FINISH_TAG OK ");
 
       digitalWrite(TAGGING_LED, LOW); // know you're tagging
       digitalWrite( SDCARD_LED, HIGH);
@@ -147,8 +181,12 @@ void loop()
       digitalWrite( SDCARD_LED, HIGH);
       delay(1000);
       digitalWrite( SDCARD_LED, LOW); // 2 blinks, it's ok
-    } 
-    else {
+      
+
+    } else {
+      
+      Serial.println(" FINISH_TAG NOT OK ");
+      
       digitalWrite(TAGGING_LED, LOW); // know you're tagging
 
       int i;
@@ -159,6 +197,8 @@ void loop()
         delay(500);
       }
     }
+    
+    state = INIT;
   }
 }
 
