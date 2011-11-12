@@ -70,7 +70,7 @@ void FreeIMU::init(int acc_addr, int gyro_addr, bool fastmode) {
     // as per note from atmega8 manual pg167
     cbi(PORTC, 4);
     cbi(PORTC, 5);
-  #elseif defined(__AVR_AT90__)
+  #elseif defined( __AVR_AT90USB1286__)
     //cbi(PORTD, 0);
     //cbi(PORTD, 1);
     

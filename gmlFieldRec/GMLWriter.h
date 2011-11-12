@@ -28,7 +28,7 @@ public:
   void beginStroke();
   void endStroke();
 
-  void addPoint( float x, float y, float z );
+  void addPoint( float x, float y, float time );
   void addPoint( float x, float y, float z, float time );
   void addPoint( float x, float y, float z, float time, float rotation );
 

@@ -10,7 +10,7 @@
 // I'm using a Teensy 2.0, but you can use any 328 or higher board.
 // You do need a bigger board to run this, anything with a 168 or Atmega8
 // probably isn't going to cut it
-#define __AVR_AT90__ 
+#define __AVR_AT90USB1286__
 // #define __AVR_ATmega328P__ // Arduino Uno
 
 #define DEBUG
@@ -22,8 +22,8 @@
 
 #define TAGGING_LED 8
 #define SDCARD_LED 9
-#define TAG_PIN 15
-#define DOWN_PIN 16
+#define TAG_PIN 14
+#define DOWN_PIN 15
 #define POWER 17
 
 #define LASER_1 24
@@ -45,7 +45,7 @@ long debounce;
 ADNS5050 omouse(10, 11, 12, 13); // might want to shift this over to non-PWM pins?
 GMLWriter gml;
 
-int position[2];
+int position[2] = { 0, 0 };
 float ypr[3];
 float prevYpr[3];
 
@@ -78,21 +78,27 @@ void setup()
 
   debounce = millis();
 
-  
-  if(gml.init() != 1) { // i.e. if it fails
+  int ret = gml.init();
+  Serial.print( ret );
+  if(ret != 1) { // i.e. if it fails
     
     Serial.println(" GML not intialized ");
   
     int i;
     for(i = 0; i<5; i++) { // 5 blinks = not ok
       digitalWrite( SDCARD_LED, HIGH);
-      delay(500);
+      delay(250);
       digitalWrite( SDCARD_LED, LOW);
-      delay(500);
+      delay(250);
     }
+  } else {
+    digitalWrite( SDCARD_LED, HIGH);
+    delay(1000);
+    digitalWrite( SDCARD_LED, LOW);
   }
 
   state = INIT;
+  Serial.print( ret );
   Serial.println(" INIT ");
 }
 
@@ -118,7 +124,6 @@ void loop()
       digitalWrite( LASER_2, HIGH );
       digitalWrite( ILLUMINATION_LED, HIGH );
 
-      tagStart = millis();
       return;
     }
   }
@@ -126,6 +131,7 @@ void loop()
   {
 
     Serial.println(" TAGGING ");
+    tagStart = millis();
     
     if(digitalRead(TAG_PIN) && millis() - debounce > 500) {
       debounce = millis();
@@ -149,16 +155,17 @@ void loop()
     Serial.println(" TAGGING_DOWN ");
     determinePosition();
 
-    if(!digitalRead(DOWN_PIN))
+    if(digitalRead(DOWN_PIN))
+    {
+      gml.addPoint(position[0], position[1], millis() - tagStart);
+    }
+    else
     {
       digitalWrite(SDCARD_LED, LOW);
       debounce = millis();
       state = TAGGING;
       gml.endStroke();
-    }
-    else
-    {
-      gml.addPoint(position[0], position[1], millis() - tagStart);
+
     }
   }
   else if(state == FINISH_TAG)
@@ -208,6 +215,7 @@ void determinePosition()
 
   imu.getYawPitchRoll(ypr);
 
+  // 75 is upright the way i've arranged the pins
   y = prevYpr[0] - ypr[0];
   p = prevYpr[1] - ypr[1];
   r = prevYpr[2] - ypr[2];
@@ -220,8 +228,6 @@ void determinePosition()
 
   position[0] += omouse.dx();
   position[1] += omouse.dy();
-
-  // not sure what to do about the yp
 
 }
 
