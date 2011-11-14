@@ -9,11 +9,11 @@
 
 #include "GMLWriter.h"
 
-const char GMLWriter::tagBegin[38] = "<gml spec='1.0'><tag><drawing>";
+const char GMLWriter::tagBegin[38] = "<gml spec='1.0'> <client><name>GML Field Recorder</name></client><tag><drawing>";
 const char GMLWriter::tagEnd[23] = "</drawing></tag></gml>";
 
 GMLWriter::GMLWriter() {
-
+  
 }
 
 GMLWriter::~GMLWriter() {
@@ -22,9 +22,7 @@ GMLWriter::~GMLWriter() {
 
 int GMLWriter::init()
 {
-  
-  Serial.print( " GMLWriter::init ");
-  
+ 
   if (!sd.init(SPI_FULL_SPEED, 20)) {
     sd.initErrorHalt();
     return -1;

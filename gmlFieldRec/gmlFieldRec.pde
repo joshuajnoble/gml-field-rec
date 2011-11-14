@@ -45,8 +45,11 @@ long debounce;
 ADNS5050 omouse(10, 11, 12, 13); // might want to shift this over to non-PWM pins?
 GMLWriter gml;
 
-int position[2] = { 0, 0 };
-float ypr[3];
+// we'll just start at 1000 so we don't go negative
+int position[2] = { 1000, 1000 };
+
+// see DCM Technote in the README for this
+float ypr[3] = { 0.0, 80.0, 0.0 };
 float prevYpr[3];
 
 // Set the FreeIMU object
