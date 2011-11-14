@@ -22,7 +22,7 @@
 
 #define TAGGING_LED 8
 #define SDCARD_LED 9
-#define TAG_PIN 14
+#define TAG_PIN 28
 #define DOWN_PIN 15
 #define POWER 17
 
@@ -42,14 +42,17 @@ long debounce;
 #define CAN_HEIGHT_600ML 28.4 // height of a 600ML molotow can in CM
 #define CAN_HEIGHT_12OZ 26
 
-ADNS5050 omouse(10, 11, 12, 13); // might want to shift this over to non-PWM pins?
+ADNS5050 omouse(10, 11, 13, 12); // might want to shift this over to non-PWM pins?
 GMLWriter gml;
 
 // we'll just start at 1000 so we don't go negative
-int position[2] = { 1000, 1000 };
+float position[2] = { 
+  2000.0, 2000.0 };
+int pposition[2];
 
 // see DCM Technote in the README for this
-float ypr[3] = { 0.0, 80.0, 0.0 };
+float ypr[3] = { 
+  0.0, 80.0, 0.0 };
 float prevYpr[3];
 
 // Set the FreeIMU object
@@ -59,14 +62,16 @@ long tagStart;
 
 void setup()
 {
-  
+
   Serial.begin( 9600 );
   
+  omouse.sync(); // this takes a second
+
   Serial.println( " begin ");
-  
+
   pinMode(POWER, OUTPUT);
   digitalWrite(POWER, HIGH);
-  
+
   pinMode(TAG_PIN, INPUT);
   pinMode(DOWN_PIN, INPUT);
 
@@ -77,6 +82,14 @@ void setup()
   pinMode(TAGGING_LED, OUTPUT);
   pinMode(SDCARD_LED, OUTPUT);
 
+  digitalWrite( SDCARD_LED, HIGH);
+  delay(500);
+  digitalWrite( SDCARD_LED, LOW);
+  digitalWrite( TAGGING_LED, HIGH);
+  delay(500);
+  digitalWrite( TAGGING_LED, LOW);
+
+
   Serial.println( " init GML ");
 
   debounce = millis();
@@ -84,9 +97,9 @@ void setup()
   int ret = gml.init();
   Serial.print( ret );
   if(ret != 1) { // i.e. if it fails
-    
+
     Serial.println(" GML not intialized ");
-  
+
     int i;
     for(i = 0; i<5; i++) { // 5 blinks = not ok
       digitalWrite( SDCARD_LED, HIGH);
@@ -94,9 +107,10 @@ void setup()
       digitalWrite( SDCARD_LED, LOW);
       delay(250);
     }
-  } else {
+  } 
+  else {
     digitalWrite( SDCARD_LED, HIGH);
-    delay(1000);
+    delay(2000);
     digitalWrite( SDCARD_LED, LOW);
   }
 
@@ -108,18 +122,18 @@ void setup()
 
 void loop()
 {
+  delay(10);
 
   if(state == INIT)
   {
-    
+
     if(digitalRead(TAG_PIN) && millis() - debounce > 500) {
-      
+
       debounce = millis();
-      
+
       Serial.println(" start tagging ");
-      
+
       state = TAGGING;
-      omouse.sync(); // this takes a second
       gml.beginDrawing();
       digitalWrite(TAGGING_LED, HIGH); // know you're tagging
 
@@ -133,18 +147,18 @@ void loop()
   else if (state == TAGGING)
   {
 
-    Serial.println(" TAGGING ");
+    //Serial.println(" TAGGING ");
     tagStart = millis();
-    
+
     if(digitalRead(TAG_PIN) && millis() - debounce > 500) {
       debounce = millis();
       Serial.println(" tag pin ");
       state = FINISH_TAG;
     }
-    
+
     imu.getYawPitchRoll(ypr);
     determinePosition();
- 
+
     if(digitalRead(DOWN_PIN) && millis() - debounce > 500)
     {
       debounce = millis();
@@ -155,12 +169,19 @@ void loop()
   }
   else if (state == TAGGING_DOWN)
   {
-    Serial.println(" TAGGING_DOWN ");
+    //Serial.println(" TAGGING_DOWN ");
     determinePosition();
 
     if(digitalRead(DOWN_PIN))
     {
-      gml.addPoint(position[0], position[1], millis() - tagStart);
+
+      if( abs(pposition[0] - position[0]) > 1.0 ||  abs(pposition[1] - position[1]) > 1.0) {
+        gml.addPoint(position[0], position[1], millis() - tagStart);
+      }
+
+      pposition[0] = position[0];
+      pposition[1] = position[1];
+
     }
     else
     {
@@ -174,13 +195,13 @@ void loop()
   else if(state == FINISH_TAG)
   {
     //if(gml.endDrawing()) {
-      
+
     digitalWrite( LASER_1, LOW );
     digitalWrite( LASER_2, LOW );
     digitalWrite( ILLUMINATION_LED, LOW );
-      
+
     if(gml.endDrawing()) {
-      
+
       Serial.println(" FINISH_TAG OK ");
 
       digitalWrite(TAGGING_LED, LOW); // know you're tagging
@@ -191,12 +212,13 @@ void loop()
       digitalWrite( SDCARD_LED, HIGH);
       delay(1000);
       digitalWrite( SDCARD_LED, LOW); // 2 blinks, it's ok
-      
 
-    } else {
-      
+
+    } 
+    else {
+
       Serial.println(" FINISH_TAG NOT OK ");
-      
+
       digitalWrite(TAGGING_LED, LOW); // know you're tagging
 
       int i;
@@ -207,7 +229,7 @@ void loop()
         delay(500);
       }
     }
-    
+
     state = INIT;
   }
 }
@@ -218,19 +240,20 @@ void determinePosition()
 
   imu.getYawPitchRoll(ypr);
 
-  // 75 is upright the way i've arranged the pins
+  // 80 is upright the way i've arranged the pins
   y = prevYpr[0] - ypr[0];
   p = prevYpr[1] - ypr[1];
   r = prevYpr[2] - ypr[2];
 
-  if(abs(r) > 0.1) /// some arbitrary noise amount
+  if(abs(r) > 2) /// some arbitrary noise amount
   {
-    position[0] += cos(r) * CAN_HEIGHT_600ML;
-    position[1] += sin(r) * CAN_HEIGHT_600ML;
+    //position[0] += cos(ypr[2] - 80) * CAN_HEIGHT_600ML;
+    //position[1] += sin(ypr[2] - 80) * CAN_HEIGHT_600ML;
   }
 
   position[0] += omouse.dx();
   position[1] += omouse.dy();
 
 }
+
 

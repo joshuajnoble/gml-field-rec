@@ -9,7 +9,7 @@
 
 #include "GMLWriter.h"
 
-const char GMLWriter::tagBegin[38] = "<gml spec='1.0'> <client><name>GML Field Recorder</name></client><tag><drawing>";
+const char GMLWriter::tagBegin[80] = "<gml spec='1.0'><client><name>GML Field Recorder</name></client><tag><drawing>";
 const char GMLWriter::tagEnd[23] = "</drawing></tag></gml>";
 
 GMLWriter::GMLWriter() {
@@ -81,6 +81,7 @@ void GMLWriter::addPoint( float x, float y, float time ) {
   s += "<pt><x>";
   //sprintf(&fp[0],  "%f", x);
   floatToString(&fp[0], x, 5);
+  Serial.print(" ");
   Serial.print(fp);
   //itoa(x, fp, 10);
   s += fp;
