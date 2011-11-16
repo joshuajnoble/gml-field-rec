@@ -43,7 +43,7 @@ private:
 
   char * floatToString(char * outstr, float value, int places, int minwidth=0, bool rightjustify=false);
 
-  static const char tagBegin[80];
+  static const char tagBegin[96];
   static const char tagEnd[23];
   
   SdFile file;

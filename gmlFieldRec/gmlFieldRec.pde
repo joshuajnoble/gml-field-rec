@@ -172,6 +172,8 @@ void loop()
     //Serial.println(" TAGGING_DOWN ");
     determinePosition();
 
+    Serial.println( omouse.surfaceQuality(), DEC );
+
     if(digitalRead(DOWN_PIN))
     {
 
@@ -251,8 +253,8 @@ void determinePosition()
     //position[1] += sin(ypr[2] - 80) * CAN_HEIGHT_600ML;
   }
 
-  position[0] += omouse.dx();
-  position[1] += omouse.dy();
+  position[0] -= omouse.dx() >> 1;
+  position[1] -= omouse.dy() >> 1;
 
 }
 

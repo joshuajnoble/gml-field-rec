@@ -19,10 +19,8 @@
 #define PIXEL_DATA_REG      0x0b
 #define SHUTTER_UPPER_REG   0x06
 #define SHUTTER_LOWER_REG   0x07
+#define MOUSE_CONTROL       0x0D
 #define RESET				0x3a
-#define CPI500v				0x00
-#define CPI1000v			0x01
-
 #define CPI500v				0x00
 #define CPI1000v			0x01
 
@@ -66,6 +64,8 @@ void ADNS5050::sync() {
   
   ADNS_write(RESET, 0x5a);
   delay(100); // From NRESET pull high to valid mo tion, assuming VDD and motion is present.
+  
+  ADNS_write(MOUSE_CONTROL, 0x01);
 }
 
 int ADNS5050::dx() { 
