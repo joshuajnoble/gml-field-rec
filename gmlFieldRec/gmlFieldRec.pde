@@ -22,6 +22,7 @@
 
 #define TAGGING_LED 8
 #define SDCARD_LED 9
+#define SQUAL_PIN 29
 #define TAG_PIN 28
 #define DOWN_PIN 15
 #define POWER 17
@@ -59,6 +60,9 @@ float prevYpr[3];
 FreeIMU imu = FreeIMU();
 
 long tagStart;
+int surfQuality;
+long lastSurfBlink;
+boolean squalPin;
 
 void setup()
 {
@@ -155,6 +159,16 @@ void loop()
       Serial.println(" tag pin ");
       state = FINISH_TAG;
     }
+    
+   surfQuality = 40 - omouse.surfaceQuality();
+    if(surfQuality < 2) {
+      digitalWrite(SQUAL_PIN, HIGH);
+    } else if(millis() - lastSurfBlink > surfQuality)) {
+      lastSurfBlink = millis();
+      digitalWrite(SQUAL_PIN, squalPin);
+      squalPin = !squalPin;
+    }
+    
 
     imu.getYawPitchRoll(ypr);
     determinePosition();
@@ -169,10 +183,17 @@ void loop()
   }
   else if (state == TAGGING_DOWN)
   {
-    //Serial.println(" TAGGING_DOWN ");
     determinePosition();
 
-    Serial.println( omouse.surfaceQuality(), DEC );
+    //Serial.println( omouse.surfaceQuality(), DEC );
+    surfQuality = 40 - omouse.surfaceQuality();
+    if(surfQuality < 2) {
+      digitalWrite(SQUAL_PIN, HIGH);
+    } else if(millis() - lastSurfBlink > surfQuality)) {
+      lastSurfBlink = millis();
+      digitalWrite(SQUAL_PIN, squalPin);
+      squalPin = !squalPin;
+    }
 
     if(digitalRead(DOWN_PIN))
     {
@@ -249,8 +270,8 @@ void determinePosition()
 
   if(abs(r) > 2) /// some arbitrary noise amount
   {
-    //position[0] += cos(ypr[2] - 80) * CAN_HEIGHT_600ML;
-    //position[1] += sin(ypr[2] - 80) * CAN_HEIGHT_600ML;
+    position[0] += cos(ypr[2] - 80) * CAN_HEIGHT_600ML;
+    position[1] += sin(ypr[2] - 80) * CAN_HEIGHT_600ML;
   }
 
   position[0] -= omouse.dx() >> 1;

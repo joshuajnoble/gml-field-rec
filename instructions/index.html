@@ -72,7 +72,7 @@ So your actual distance from
 
 <h1>Cutting Stuff Up</h1>
 
-<p>I cut the lens mount and the ADNS5050 holder out of 2mm acrylic on a cheap shitty laser cutter. Works like a dream. The illustrator file is included. The difficulty is positioning the lens just right so that it's 5.25mm from the optical mouse sensor.</p>
+<p>I cut the lens mount and the ADNS5050 holder out of 2mm acrylic on a cheap shitty laser cutter. Works like a dream. The illustrator file is included. The difficulty is positioning the lens just right so that it's 5.25mm from the optical mouse sensor. I made a mount out of two pieces of two pieces of acrylic and put some little holes in them to ensure that everything lined up right.</p>
 
 <p>The lens mouse illustrator files are included as lens_mount.ai<br/>
 The body of the field recorder is shown in shape_pattern.ai<br/>
@@ -80,7 +80,7 @@ It's fairly rough right now, v2 is going to have a better shaped body.</p>
 
 <h1>Putting It Together</h1>
 
-<p>The Teensy sits on the body, with all the wiring and a 9V battery. The lens+ADNS assembly slots into the little cutout at the end. Right now I have it so it's fit tight with the 2 sheets of 2mm acrylic that make up my assembly, but whatever holds it perpendicular to the wall and doesn't allow it to move is just fine. The body is then slid over the bottom of the spray paint can and taped into place (tape not neccessary, but recommended).
+<p>The Teensy sits on the body, with all the wiring and a 9V battery. The lens+ADNS assembly slots into the little cutout at the end. Right now I have it so it's fit tight with the 2 sheets of 2mm acrylic that make up my assembly, but whatever holds it perpendicular to the wall and doesn't allow it to move is just fine. The body is then slid over the bottom of the spray paint can and held into place with some pieces of tape. I also added some  into place (tape not neccessary, but recommended).
 </p>
 
 <p>The capacitive sensor uses a piece of foil to read the touches when the user is actually making a line. You should put near the top of the can so that it's easy to spray and signal to the recorder that you're making a line at the same time.</p>
@@ -91,11 +91,11 @@ It's fairly rough right now, v2 is going to have a better shaped body.</p>
 
 <ul>
 <li>Start up the field recorder by plugging in the battery.</li>
-<li>If the SD Card is full or there's another problem with it, the SD card LED is flashed 5 times to let you know. Otherwise, nothing happens.</li>
-<li>When you press the toggle button, you start recording a tag. The recording light won't actually go on until you press down on the capacitive sensor.</li>
-<li>When you press on the capacitive sensor the recording LED will go on to let you know that the stroke is being recorded. When it's released the recording LED goes out. This givs you an idea of what's going on in the recorder.</li>
+<li>If the SD Card is full or there's another problem with it, the SD card LED is flashed 5 times to let you know. Otherwise, it illuminates for 1 second.</li>
+<li>When you press the toggle button, you start recording a tag. The recording light goes on to let you know that the tag is being recorded.</li>
+<li>When you press on the capacitive sensor the recording LED <i>and</i> the SD card LED will go on to let you know that the stroke is being recorded. When it's released the SD card LED goes out. This givs you an idea of what's going on in the recorder. You can use the surface quality LED to see how well your ADNS5050 is recognizing the surface. If the light is steadily illuminated, it's doing very well; the more slolwy the light blinks, the worse the signal quality and the worse the accuracy of your recorded tag will be.</li>
 <li>As you move the recorder around it's important to keep it oriented perpendicular to the wall. The beta version of the software will be much better about allowing you to move the recorder around a little more but for the moment the mouse sensor is the only thing really recording the position, so it's important that it works well. Right now the sensor is 0.5 centimeter precise when used correctly, but I'm working on it, and hopefully I'll get to mm precision soonish. Just a little bit more math and noise filtering to use the 9DOF better. If you've set the lens so that it should be focused at 2cm, then make sure you keep it at 2cm. Again, this is going to get better in the v2 or beta release, or whatever, but tat the moment it's a bit naive, so bear that in mind when making a tag.</li>
-<li>When you're done with your tag simply press the button again and you'll see the tag light either blink 3 times for a happy write to file or 5 times for a failed write to file.</li>
+<li>When you're done with your tag simply press the button again and you'll see the tag light either blink 3 times slowly for a happy write to file or 5 times quickly for a failed write to file.</li>
 </ul>
 
 <h1>The Code</h1>
