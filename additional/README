@@ -1,0 +1,5 @@
+This library/code sample is to demonstrate writing GML to an SD card. I'd like to expand it to stream over RF as well. You do need to add one method to the WString class to get it work properly though:
+
+char* c_str() { return _buffer; }
+
+this mimics the c++ string method.
