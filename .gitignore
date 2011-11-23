@@ -4,4 +4,4 @@
 #EAGLE
 EAGLE/*.s#*
 EAGLE/*.b#*
-
+EAGLE/*.l#*
