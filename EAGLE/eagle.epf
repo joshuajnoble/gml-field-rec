@@ -282,10 +282,11 @@ UsedLibrary="/Applications/EAGLE/lbr/wuerth-elektronik.lbr"
 UsedLibrary="/Applications/EAGLE/lbr/xicor.lbr"
 UsedLibrary="/Applications/EAGLE/lbr/zetex.lbr"
 UsedLibrary="/Applications/EAGLE/lbr/zilog.lbr"
+UsedLibrary="fieldrec.lbr"
 
 [Win_1]
 Type="Control Panel"
-Loc="4 22 1032 877"
+Loc="60 156 1339 1007"
 State=2
 Number=0
 
