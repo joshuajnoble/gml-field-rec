@@ -1,1 +1,11 @@
 WARNING: WORK IN PROGRESS...
+
+configuring Eagle
+-----------------
+
+(B) setup environment in Eagle (library, schematic, layout)
+  (1) in Eagle choose Options/Directories
+  (2) add EAGLE diretory to Libraries (seperate paths with ':')
+  (3) add EAGLE directory to Projects
+  (4) in main Eagle window, under Projects, enable the fieldrec.lbr by clicking in the small grey circle (become green when enabled)  
+
