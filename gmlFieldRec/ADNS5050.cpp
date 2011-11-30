@@ -110,7 +110,7 @@ void ADNS5050::ADNS_write(unsigned char addr, unsigned char data)
 	
 	temp = addr | 0x80; // MOST RECENT
 	
-	digitalWrite(sclkPin, LOW); //SCK = 0;					// start clock low
+	digitalWrite(sclkPin, LOW); //SCK = 0;
 	pinMode(sdioPin, OUTPUT); //DATA_OUT; // set data line for output
 	for (n=0; n<8; n++) {
 		digitalWrite(sclkPin, LOW); //SCK = 0;
@@ -122,7 +122,7 @@ void ADNS5050::ADNS_write(unsigned char addr, unsigned char data)
 			digitalWrite(sdioPin, LOW);//SDOUT = 0;
 		temp = (temp << 1);
 		digitalWrite(sclkPin, HIGH);//SCK = 1;
-		delayMicroseconds(MICROSEC_DELAY);//delayMicroseconds(1);			// short clock pulse
+		delayMicroseconds(MICROSEC_DELAY);//delayMicroseconds(1);
 	}
 	temp = data;
 	for (n=0; n<8; n++) {

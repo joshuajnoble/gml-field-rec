@@ -1,7 +1,12 @@
 body {
-	background-color:#eeeeee;
+	background-color:#ddd;
 	color:#333;
-	font-family: 'Lucida Sans Unicode', 'Lucida Grande', sans-serif;	
+	font-family: 'Lucida Sans Unicode', 'Lucida Grande', sans-serif;
+	overflow-x:hidden;
+	padding-left:0px;
+	margin-left:0px;
+	margin-bottom:0px;
+	padding-bottom:0px;
 }
 
 .code {
@@ -11,3 +16,90 @@ body {
 ul {
 	list-style:none;
 }
+
+a {
+	font-weight:bold;
+	text-decoration:none;
+	color:#f66;
+}
+
+.content {
+	padding:10px;
+	margin:10px;
+}
+
+.header {
+	color:#fff;
+	margin:0px;
+	display:block;
+	padding-left:20%;
+	padding-top:10px;
+	padding-bottom:0px;
+	top:0px;
+	
+	overflow:hidden;
+	background-image:url('headerbg.png');
+	width:100%;
+	min-height:180px;
+}
+
+.header h1 {
+	overflow:hidden;
+	font-family:Monofett;
+	font-size:84px;
+	padding-left:0px;
+	padding-bottom:0px;
+	margin-bottom:0px;
+	margin-left:0px;
+}
+
+.heading h1 {
+	font-family:Monofett;
+	font-size:60px;
+	padding-bottom:0px;
+	margin-bottom:0px;
+	margin-top:0px;
+}
+
+.heading a {
+	color:#f55;
+}
+
+#footer {
+	color:#fff;
+	font-size:40px;
+	font-family: 'Cedarville Cursive', cursive;
+	border-top-style:solid;
+	width:100%;
+	padding-left:10px;
+	border-top-width:1px;
+	border-top-color:#fff;
+	background-color:#f55;
+}
+
+.heading {
+	overflow:hidden;
+	font-family:Monofett;
+	width:100%;
+	padding:10px;
+	background-color:#000;
+	color:#fff;
+}
+
+.imaging {
+	padding-top:5px;
+	padding-bottom:5px;
+	margin-bottom:10px;
+	margin-top:10px;
+	width:100%;
+	border-style:solid;
+	border-color:#d9d9d9;
+	border-width:4px;
+	text-align:center;
+}
+
+img {
+	padding:10px;
+	margin-left:20;
+}
+

@@ -4,6 +4,7 @@
 #include <ADXL345.h>
 #include <HMC58X3.h>
 #include <ITG3200.h>
+#include <CapSense.h>
 
 #include <SdFat.h>
 
@@ -20,17 +21,19 @@
 #include "FreeIMU.h"
 #include "CommunicationUtils.h"
 
-#define TAGGING_LED 8
-#define SDCARD_LED 9
-#define SQUAL_PIN 29
-#define TAG_PIN 28
-#define DOWN_PIN 15
-#define POWER 17
+#define TAGGING_LED 33
+#define SDCARD_LED 29
+#define SQUAL_LED 28
+#define TAG_PIN 32
 
-#define LASER_1 24
-#define LASER_2 26
-#define ILLUMINATION_LED 25
+#define SCLK                11
+#define SDIO                10
+#define RESET_PIN           12
+#define NCS                 13
 
+#define ILLUMINATION_LED 24
+
+// STATE
 int state;
 
 #define INIT 1
@@ -43,17 +46,16 @@ long debounce;
 #define CAN_HEIGHT_600ML 28.4 // height of a 600ML molotow can in CM
 #define CAN_HEIGHT_12OZ 26
 
-ADNS5050 omouse(10, 11, 13, 12); // might want to shift this over to non-PWM pins?
+ADNS5050 omouse(SCLK, SDIO, NCS, RESET_PIN); // might want to shift this over to non-PWM pins?
 GMLWriter gml;
 
-// we'll just start at 1000 so we don't go negative
+// we'll just start at 2000 so we don't go negative
 float position[2] = { 
   2000.0, 2000.0 };
 int pposition[2];
 
 // see DCM Technote in the README for this
-float ypr[3] = { 
-  0.0, 80.0, 0.0 };
+float ypr[3] = { 0.0, 80.0, 0.0 };
 float prevYpr[3];
 
 // Set the FreeIMU object
@@ -64,6 +66,8 @@ int surfQuality;
 long lastSurfBlink;
 boolean squalPin;
 
+CapSense listenCap = CapSense(34, 30);
+
 void setup()
 {
 
@@ -72,19 +76,13 @@ void setup()
   omouse.sync(); // this takes a second
 
   Serial.println( " begin ");
-
-  pinMode(POWER, OUTPUT);
-  digitalWrite(POWER, HIGH);
-
-  pinMode(TAG_PIN, INPUT);
-  pinMode(DOWN_PIN, INPUT);
-
-  pinMode( LASER_1, OUTPUT );
-  pinMode( LASER_2, OUTPUT );
+  
   pinMode( ILLUMINATION_LED, OUTPUT );
+  pinMode(TAG_PIN, INPUT);
 
   pinMode(TAGGING_LED, OUTPUT);
   pinMode(SDCARD_LED, OUTPUT);
+  pinMode(SQUAL_LED, OUTPUT);
 
   digitalWrite( SDCARD_LED, HIGH);
   delay(500);
@@ -92,6 +90,9 @@ void setup()
   digitalWrite( TAGGING_LED, HIGH);
   delay(500);
   digitalWrite( TAGGING_LED, LOW);
+  digitalWrite( SQUAL_LED, HIGH);
+  delay(500);
+  digitalWrite( SQUAL_LED, LOW);
 
 
   Serial.println( " init GML ");
@@ -121,16 +122,17 @@ void setup()
   state = INIT;
   Serial.print( ret );
   Serial.println(" INIT ");
+  
+  listenCap.set_CS_AutocaL_Millis(10);
 }
 
 
 void loop()
 {
-  delay(10);
 
   if(state == INIT)
   {
-
+    delay(10);
     if(digitalRead(TAG_PIN) && millis() - debounce > 500) {
 
       debounce = millis();
@@ -141,8 +143,6 @@ void loop()
       gml.beginDrawing();
       digitalWrite(TAGGING_LED, HIGH); // know you're tagging
 
-      digitalWrite( LASER_1, HIGH );
-      digitalWrite( LASER_2, HIGH );
       digitalWrite( ILLUMINATION_LED, HIGH );
 
       return;
@@ -150,7 +150,7 @@ void loop()
   }
   else if (state == TAGGING)
   {
-
+    delay(10);
     //Serial.println(" TAGGING ");
     tagStart = millis();
 
@@ -159,27 +159,30 @@ void loop()
       Serial.println(" tag pin ");
       state = FINISH_TAG;
     }
-    
-   surfQuality = 40 - omouse.surfaceQuality();
+   
+   byte sqty = omouse.surfaceQuality();
+   surfQuality = 40 - sqty;
+   //Serial.println(sqty, HEX);
+   
     if(surfQuality < 2) {
-      digitalWrite(SQUAL_PIN, HIGH);
-    } else if(millis() - lastSurfBlink > surfQuality)) {
+      digitalWrite(SQUAL_LED, HIGH);
+    } else if(millis() - lastSurfBlink > surfQuality) {
       lastSurfBlink = millis();
-      digitalWrite(SQUAL_PIN, squalPin);
+      digitalWrite(SQUAL_LED, squalPin);
       squalPin = !squalPin;
     }
     
 
     imu.getYawPitchRoll(ypr);
     determinePosition();
-
-    if(digitalRead(DOWN_PIN) && millis() - debounce > 500)
+    
+    if(listenCap.capSense(10) > 1000) // this is for my configuration, yrs may differ
     {
-      debounce = millis();
       digitalWrite(SDCARD_LED, HIGH);
       state = TAGGING_DOWN;
       gml.beginStroke();
     }
+    
   }
   else if (state == TAGGING_DOWN)
   {
@@ -188,14 +191,14 @@ void loop()
     //Serial.println( omouse.surfaceQuality(), DEC );
     surfQuality = 40 - omouse.surfaceQuality();
     if(surfQuality < 2) {
-      digitalWrite(SQUAL_PIN, HIGH);
-    } else if(millis() - lastSurfBlink > surfQuality)) {
+      digitalWrite(SQUAL_LED, HIGH);
+    } else if(millis() - lastSurfBlink > surfQuality) {
       lastSurfBlink = millis();
-      digitalWrite(SQUAL_PIN, squalPin);
+      digitalWrite(SQUAL_LED, squalPin);
       squalPin = !squalPin;
     }
-
-    if(digitalRead(DOWN_PIN))
+    
+    if(listenCap.capSense(10) > 1000)
     {
 
       if( abs(pposition[0] - position[0]) > 1.0 ||  abs(pposition[1] - position[1]) > 1.0) {
@@ -214,13 +217,12 @@ void loop()
       gml.endStroke();
 
     }
+    
   }
   else if(state == FINISH_TAG)
   {
     //if(gml.endDrawing()) {
 
-    digitalWrite( LASER_1, LOW );
-    digitalWrite( LASER_2, LOW );
     digitalWrite( ILLUMINATION_LED, LOW );
 
     if(gml.endDrawing()) {
@@ -237,8 +239,7 @@ void loop()
       digitalWrite( SDCARD_LED, LOW); // 2 blinks, it's ok
 
 
-    } 
-    else {
+    } else {
 
       Serial.println(" FINISH_TAG NOT OK ");
 
@@ -252,7 +253,7 @@ void loop()
         delay(500);
       }
     }
-
+    digitalWrite( SQUAL_LED, LOW);
     state = INIT;
   }
 }
@@ -261,18 +262,26 @@ void determinePosition()
 {
   float y, p, r;
 
-  imu.getYawPitchRoll(ypr);
+  imu.getYawPitchRoll(&ypr[0]);
 
-  // 80 is upright the way i've arranged the pins
   y = prevYpr[0] - ypr[0];
   p = prevYpr[1] - ypr[1];
   r = prevYpr[2] - ypr[2];
+  
+  Serial.print(r);
+  Serial.print(" " );
+  Serial.println(ypr[2]);
 
   if(abs(r) > 2) /// some arbitrary noise amount
   {
+    // 80 is upright the way i've arranged the pins
     position[0] += cos(ypr[2] - 80) * CAN_HEIGHT_600ML;
     position[1] += sin(ypr[2] - 80) * CAN_HEIGHT_600ML;
   }
+
+  prevYpr[0] = ypr[0];
+  prevYpr[1] = ypr[1];
+  prevYpr[2] = ypr[2];
 
   position[0] -= omouse.dx() >> 1;
   position[1] -= omouse.dy() >> 1;
