@@ -123,6 +123,7 @@ void setup()
   Serial.print( ret );
   Serial.println(" INIT ");
   
+  listenCap.set_CS_Timeout_Millis(20);
   listenCap.set_CS_AutocaL_Millis(10);
 }
 
@@ -161,8 +162,9 @@ void loop()
     }
    
    byte sqty = omouse.surfaceQuality();
-   surfQuality = 40 - sqty;
-   //Serial.println(sqty, HEX);
+   if(sqty != -1) { // sometimes this just returns nothing
+     surfQuality = 40 - sqty;
+   }
    
     if(surfQuality < 2) {
       digitalWrite(SQUAL_LED, HIGH);
@@ -176,7 +178,7 @@ void loop()
     imu.getYawPitchRoll(ypr);
     determinePosition();
     
-    if(listenCap.capSense(10) > 1000) // this is for my configuration, yrs may differ
+    if(listenCap.capSense(10) > 500) // this is for my configuration, yrs may differ
     {
       digitalWrite(SDCARD_LED, HIGH);
       state = TAGGING_DOWN;
@@ -189,7 +191,12 @@ void loop()
     determinePosition();
 
     //Serial.println( omouse.surfaceQuality(), DEC );
-    surfQuality = 40 - omouse.surfaceQuality();
+    
+   byte sqty = omouse.surfaceQuality();
+   if(sqty != -1) { // sometimes this just returns nothing
+     surfQuality = 40 - sqty;
+   }
+    
     if(surfQuality < 2) {
       digitalWrite(SQUAL_LED, HIGH);
     } else if(millis() - lastSurfBlink > surfQuality) {
@@ -198,7 +205,7 @@ void loop()
       squalPin = !squalPin;
     }
     
-    if(listenCap.capSense(10) > 1000)
+    if(listenCap.capSense(10) > 500)
     {
 
       if( abs(pposition[0] - position[0]) > 1.0 ||  abs(pposition[1] - position[1]) > 1.0) {

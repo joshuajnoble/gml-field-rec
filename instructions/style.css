@@ -4,6 +4,7 @@ body {
 	font-family: 'Lucida Sans Unicode', 'Lucida Grande', sans-serif;
 	overflow-x:hidden;
 	padding-left:0px;
+	margin-top:0px;
 	margin-left:0px;
 	margin-bottom:0px;
 	padding-bottom:0px;
@@ -20,7 +21,7 @@ ul {
 a {
 	font-weight:bold;
 	text-decoration:none;
-	color:#f66;
+	color:#f45;
 }
 
 .content {
@@ -38,7 +39,7 @@ a {
 	top:0px;
 	
 	overflow:hidden;
-	background-image:url('headerbg.png');
+	background-image:url('headerbg.jpg');
 	width:100%;
 	min-height:180px;
 }
@@ -101,5 +102,20 @@ a {
 img {
 	padding:10px;
 	margin-left:20;
+}
+
+#logo {
+	padding:0px;
+	padding-left:5%;
+	margin:-5px;
+}
+
+#subtitle {
+	font-family:Monofett;
+	font-size:60px;
+	padding-left:5%;
+	margin-top:0px;
+	padding-top:0px;
+	margin-bottom:0px;
 }
 
