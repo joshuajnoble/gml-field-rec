@@ -16,7 +16,12 @@
 
 #define DEBUG
 
-//#define DEBUG
+#ifdef DEBUG
+  const int CAP_LIM = 2000;
+#else
+  const int CAP_LIM = 500;
+#endif
+
 #include "DebugUtils.h"
 #include "FreeIMU.h"
 #include "CommunicationUtils.h"
@@ -43,6 +48,9 @@ int state;
 
 long debounce;
 
+//#define CAN_HEIGHT_600ML 28.4 // height of a 600ML molotow can in CM
+//#define CAN_HEIGHT_12OZ 26
+
 #define CAN_HEIGHT_600ML 28.4 // height of a 600ML molotow can in CM
 #define CAN_HEIGHT_12OZ 26
 
@@ -54,8 +62,7 @@ float position[2] = {
   2000.0, 2000.0 };
 int pposition[2];
 
-// see DCM Technote in the README for this
-float ypr[3] = { 0.0, 80.0, 0.0 };
+float ypr[3] = { 0.0, 0.0, 0.0 };
 float prevYpr[3];
 
 // Set the FreeIMU object
@@ -74,8 +81,6 @@ void setup()
   Serial.begin( 9600 );
   
   omouse.sync(); // this takes a second
-
-  Serial.println( " begin ");
   
   pinMode( ILLUMINATION_LED, OUTPUT );
   pinMode(TAG_PIN, INPUT);
@@ -97,6 +102,7 @@ void setup()
 
   Serial.println( " init GML ");
 
+  // SD CARD SET UP
   debounce = millis();
 
   int ret = gml.init();
@@ -120,11 +126,18 @@ void setup()
   }
 
   state = INIT;
-  Serial.print( ret );
-  Serial.println(" INIT ");
   
-  listenCap.set_CS_Timeout_Millis(20);
+  // CAPSENSE setup
+  listenCap.set_CS_Timeout_Millis(30);
   listenCap.set_CS_AutocaL_Millis(10);
+  
+  
+  // FREEIMU set up
+  Wire.begin();
+  Serial.println( " set pu  ");
+  delay(5);
+  imu.init(); // the parameter enable or disable fast mode
+  delay(5);
 }
 
 
@@ -133,7 +146,7 @@ void loop()
 
   if(state == INIT)
   {
-    delay(10);
+    //delay(10);
     if(digitalRead(TAG_PIN) && millis() - debounce > 500) {
 
       debounce = millis();
@@ -151,7 +164,7 @@ void loop()
   }
   else if (state == TAGGING)
   {
-    delay(10);
+    //delay(10);
     //Serial.println(" TAGGING ");
     tagStart = millis();
 
@@ -178,7 +191,8 @@ void loop()
     imu.getYawPitchRoll(ypr);
     determinePosition();
     
-    if(listenCap.capSense(10) > 500) // this is for my configuration, yrs may differ
+    int cap = listenCap.capSense(10);
+    if(cap > CAP_LIM || cap < -1) // this is for my configuration, yrs may differ
     {
       digitalWrite(SDCARD_LED, HIGH);
       state = TAGGING_DOWN;
@@ -205,7 +219,8 @@ void loop()
       squalPin = !squalPin;
     }
     
-    if(listenCap.capSense(10) > 500)
+    int cap = listenCap.capSense(10);
+    if(cap > CAP_LIM || cap < -1)
     {
 
       if( abs(pposition[0] - position[0]) > 1.0 ||  abs(pposition[1] - position[1]) > 1.0) {
@@ -267,6 +282,10 @@ void loop()
 
 void determinePosition()
 {
+
+  position[0] -= omouse.dx() >> 1;
+  position[1] -= omouse.dy() >> 1;
+
   float y, p, r;
 
   imu.getYawPitchRoll(&ypr[0]);
@@ -275,23 +294,30 @@ void determinePosition()
   p = prevYpr[1] - ypr[1];
   r = prevYpr[2] - ypr[2];
   
-  Serial.print(r);
-  Serial.print(" " );
-  Serial.println(ypr[2]);
+  float xRot, yRot;
 
-  if(abs(r) > 2) /// some arbitrary noise amount
+  if(abs(p) > 0.1) /// some arbitrary noise amount
   {
-    // 80 is upright the way i've arranged the pins
-    position[0] += cos(ypr[2] - 80) * CAN_HEIGHT_600ML;
-    position[1] += sin(ypr[2] - 80) * CAN_HEIGHT_600ML;
+    //xRot = sin(ypr[1] * (PI/180.0) + (TWO_PI));
+    //yRot = cos(ypr[1] * (PI/180.0) + (TWO_PI));
+
+    xRot = sin(ypr[1] + (TWO_PI));
+    yRot = cos(ypr[1] + (TWO_PI));
+    
+    position[0] += xRot;
+    position[1] -= yRot;
+    
   }
 
   prevYpr[0] = ypr[0];
   prevYpr[1] = ypr[1];
   prevYpr[2] = ypr[2];
 
-  position[0] -= omouse.dx() >> 1;
-  position[1] -= omouse.dy() >> 1;
+  Serial.print(ypr[1]);
+  Serial.print(" ");
+  Serial.print(position[0]);
+  Serial.print(" " );
+  Serial.println(position[1]);
 
 }
 

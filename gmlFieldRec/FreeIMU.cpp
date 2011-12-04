@@ -18,11 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <inttypes.h>
-//#define DEBUG
 #include "WProgram.h"
 #include "FreeIMU.h"
-// #include "WireUtils.h"
-#include "DebugUtils.h"
 
 //----------------------------------------------------------------------------------------------------
 // Definitions
@@ -60,26 +57,12 @@ void FreeIMU::init(bool fastmode) {
 void FreeIMU::init(int acc_addr, int gyro_addr, bool fastmode) {
   delay(5);
   
-  #ifndef cbi
-    #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
-  #endif
-  
   // disable internal pullups of the ATMEGA which Wire enable by default
   #if defined(__AVR_ATmega168__) || defined(__AVR_ATmega8__) || defined(__AVR_ATmega328P__)
     // deactivate internal pull-ups for twi
     // as per note from atmega8 manual pg167
     cbi(PORTC, 4);
     cbi(PORTC, 5);
-  #elseif defined( __AVR_AT90USB1286__)
-    //cbi(PORTD, 0);
-    //cbi(PORTD, 1);
-    
-    PORTD &= ~(1<<0);   //Clear
-    PORTD |= (1<<0);    //Set
-    
-    PORTD &= ~(1<<1);   //Clear
-    PORTD |= (1<<1);    //Set
-    
   #else
     // deactivate internal pull-ups for twi
     // as per note from atmega128 manual pg204
@@ -92,30 +75,18 @@ void FreeIMU::init(int acc_addr, int gyro_addr, bool fastmode) {
     // TODO: make the above usable also for 8MHz arduinos..
   }
   
-  #if FREEIMU_VER <= 3
-    // init ADXL345
-    acc.init(acc_addr);
-  #else
-    // init BMA180
-    acc.setAddress(acc_addr);
-    acc.SoftReset();
-    acc.enableWrite();
-    acc.SetFilter(acc.F10HZ);
-    acc.setGSensitivty(acc.G15);
-    acc.SetSMPSkip();
-    acc.SetISRMode();
-    acc.disableWrite();
-  #endif
+  // init ADXL345
+  acc.init(acc_addr);
 
   // init ITG3200
   gyro.init(gyro_addr);
   // calibrate the ITG3200
-  gyro.zeroCalibrate(64,5);
+  gyro.zeroCalibrate(128,5);
   
   // init HMC5843
   magn.init(false); // Don't set mode yet, we'll do that later on.
   // Calibrate HMC using self test, not recommended to change the gain after calibration.
-  magn.calibrate(1); // Use gain 1=default, valid 0-7, 7 not recommended.
+  magn.calibrate(4); // Use gain 1=default, valid 0-7, 7 not recommended.
   // Single mode conversion was used in calibration, now set continuous mode
   magn.setMode(0);
   delay(10);
@@ -167,6 +138,11 @@ void FreeIMU::getValues(float * values) {
 //
 //=====================================================================================================
 void FreeIMU::AHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz) {
+	
+	adjustedGyro[0] = mx;
+	adjustedGyro[1] = my;
+	adjustedGyro[2] = mz;
+	
   float norm;
   float hx, hy, hz, bx, bz;
   float vx, vy, vz, wx, wy, wz;
@@ -195,24 +171,10 @@ void FreeIMU::AHRSupdate(float gx, float gy, float gz, float ax, float ay, float
   ay = ay / norm;
   az = az / norm;
   
-  /*
-  norm = invSqrt(ax*ax + ay*ay + az*az);
-  ax = ax * norm;
-  ay = ay * norm;
-  az = az * norm;
-  */
-  
   norm = sqrt(mx*mx + my*my + mz*mz);          
   mx = mx / norm;
   my = my / norm;
   mz = mz / norm;
-  
-  /*
-  norm = invSqrt(mx*mx + my*my + mz*mz);
-  mx = mx * norm;
-  my = my * norm;
-  mz = mz * norm;
-  */
   
   // compute reference direction of flux
   hx = 2*mx*(0.5 - q2q2 - q3q3) + 2*my*(q1q2 - q0q3) + 2*mz*(q1q3 + q0q2);
@@ -262,29 +224,12 @@ void FreeIMU::AHRSupdate(float gx, float gy, float gz, float ax, float ay, float
   q1 = q1 / norm;
   q2 = q2 / norm;
   q3 = q3 / norm;
-  
-/*
-  norm = invSqrt(q0*q0 + q1*q1 + q2*q2 + q3*q3);
-  q0 = q0 * norm;
-  q1 = q1 * norm;
-  q2 = q2 * norm;
-  q3 = q3 * norm;
-  */
+
 }
 
 void FreeIMU::getQ(float * q) {
   float val[9];
   getValues(val);
-  
-  DEBUG_PRINT(val[3] * M_PI/180);
-  DEBUG_PRINT(val[4] * M_PI/180);
-  DEBUG_PRINT(val[5] * M_PI/180);
-  DEBUG_PRINT(val[0]);
-  DEBUG_PRINT(val[1]);
-  DEBUG_PRINT(val[2]);
-  DEBUG_PRINT(val[6]);
-  DEBUG_PRINT(val[7]);
-  DEBUG_PRINT(val[8]);
   
   // gyro values are expressed in deg/sec, the * M_PI/180 will convert it to radians/sec
   AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
@@ -317,8 +262,11 @@ void FreeIMU::getYawPitchRoll(float * ypr) {
   gz = q[0]*q[0] - q[1]*q[1] - q[2]*q[2] + q[3]*q[3];
   
   ypr[0] = atan2(2 * q[1] * q[2] - 2 * q[0] * q[3], 2 * q[0]*q[0] + 2 * q[1] * q[1] - 1) * 180/M_PI;
-  ypr[1] = atan(gx / sqrt(gy*gy + gz*gz))  * 180/M_PI;
-  ypr[2] = atan(gy / sqrt(gx*gx + gz*gz))  * 180/M_PI;
+  //ypr[1] = atan(gx / sqrt(gy*gy + gz*gz))  * 180/M_PI;
+  //ypr[2] = atan(gy / sqrt(gx*gx + gz*gz))  * 180/M_PI;
+	
+  ypr[1] = atan(gx / sqrt(gy*gy + gz*gz)); // we want rads for sin/cos in GML FR
+  ypr[2] = atan(gy / sqrt(gx*gx + gz*gz));
 }
 
 
