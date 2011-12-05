@@ -99,9 +99,6 @@ void setup()
   delay(500);
   digitalWrite( SQUAL_LED, LOW);
 
-
-  Serial.println( " init GML ");
-
   // SD CARD SET UP
   debounce = millis();
 
@@ -153,10 +150,23 @@ void loop()
 
       Serial.println(" start tagging ");
 
-      state = TAGGING;
-      gml.beginDrawing();
-      digitalWrite(TAGGING_LED, HIGH); // know you're tagging
+      if( gml.beginDrawing() != 1 ) {
+        
+        Serial.print(" can't begin drawing ");
+        
+        int i;
+        for(i = 0; i<5; i++) { // 5 blinks = not ok
+          digitalWrite( SDCARD_LED, HIGH);
+          delay(500);
+          digitalWrite( SDCARD_LED, LOW);
+          delay(500);
+        }
+        return;
+      }
 
+      state = TAGGING;
+      
+      digitalWrite(TAGGING_LED, HIGH); // know you're tagging
       digitalWrite( ILLUMINATION_LED, HIGH );
 
       return;
@@ -181,7 +191,7 @@ void loop()
    
     if(surfQuality < 2) {
       digitalWrite(SQUAL_LED, HIGH);
-    } else if(millis() - lastSurfBlink > surfQuality) {
+    } else if(millis() - lastSurfBlink > surfQuality * 2) {
       lastSurfBlink = millis();
       digitalWrite(SQUAL_LED, squalPin);
       squalPin = !squalPin;
@@ -213,7 +223,7 @@ void loop()
     
     if(surfQuality < 2) {
       digitalWrite(SQUAL_LED, HIGH);
-    } else if(millis() - lastSurfBlink > surfQuality) {
+    } else if(millis() - lastSurfBlink > surfQuality * 2) {
       lastSurfBlink = millis();
       digitalWrite(SQUAL_LED, squalPin);
       squalPin = !squalPin;
@@ -304,7 +314,7 @@ void determinePosition()
     xRot = sin(ypr[1] + (TWO_PI));
     yRot = cos(ypr[1] + (TWO_PI));
     
-    position[0] += xRot;
+    position[0] -= xRot;
     position[1] -= yRot;
     
   }

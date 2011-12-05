@@ -7,10 +7,34 @@
 <body>
 
 <div class="header">
-	<img id="logo" src="logo2.png"/>
+	<img id="logo" src="logo.png"/>
 	<br/>
 	<span id="subtitle">GML Field Recorder</span>
 </div>
+
+
+<div class="heading">
+	<h1>What Is This?</h1>
+</div>
+
+<div class="content">
+
+It's my entry for the GML Field Record Challenge which you can read more about <a href="www.graffitimarkuplanguage.com/challenges/gml-field-recorder-challenge/">here</a>. What's GML you ask? Good question! Maybe this video will help:
+
+<div class="imaging">
+<iframe src="http://player.vimeo.com/video/14098101?title=0&amp;byline=0&amp;portrait=0" width="400" height="225" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>
+</div>
+
+So now you know a little about what GML is, you can understand why it would be cool to have something that could record GML out in the field, right? So what do we have? We got this:
+
+<div class="imaging">
+<img src="finished.jpg"/>
+</div>
+
+Looks crazy, right? I know. It kind of does. But it's also made to be built by anyone. Yes, anyone. Even you. So let's get down to it! First things first, you'll need to buy stuff.
+
+</div>
+
 
 <div class="heading">
 	<h1>Buying Stuff</h1>
@@ -33,19 +57,20 @@ Let's make a list in US Dollars, so I don't have to convert back everything I bo
 <li>2 1mF Capacitors $1</li>
 <li>Some Wires $3</li>
 <li>Sparkfun 9DOF $99 <a href="http://www.sparkfun.com/products/10724">here</a></li>
-<li>2 LEDs $2</li>
-<li>1 PCF8883 Proximity sensor $2.80</li>
-<li>2 220uF Capacitors </li>
-<li>1 Camera lens ~$10 (for the camera)</li>
+<li>3 LEDs $2</li>
+<li>2 220uF Capacitors $1</li>
+<li>1 100uF Capacitor $0.50</li>
+<li>1 1mO Resistor $0.50</li>
+<li>1 Camera lens ~$10 (for the camera but you'll tear it apart)</li>
 <li>MicroSD card 2GB  $4</li>
 <li>1 3.3V Voltage Regulator $3</li>
 <li>MicroSD card holder $4 OR</li>
 <li>MicroSD card shield $10 <a href="http://www.sparkfun.com/products/544">here</a></li>
-<li>Aluminum Foil $1</li>
+<li>Aluminum Foil $0.50</li>
 <li>Pushbutton $1</li>
 </ul>
 
-<strong>= $178.27 or 127.22 Euros</strong>
+<strong>= $170.97 or 126.81 Euros</strong>
 <br/>
 Not too shabby. 
 <br/>
@@ -57,6 +82,7 @@ Where can I get this stuff?
 <a href="uk.rs-online.com">RS</a><br/>
 
 </div>
+
 
 <div class="heading">
 <h1>How Does It Work?</h1>
@@ -96,9 +122,27 @@ So your actual distance from the die to the aperature is 1mm from the start. You
 
 <p>I cut the lens mount and the ADNS5050 holder out of 2mm acrylic on a cheap shitty laser cutter. Works like a dream. The illustrator file is included. The difficulty is positioning the lens just right so that it's 5.25mm from the optical mouse sensor. I made a mount out of two pieces of two pieces of acrylic and put some little holes in them to ensure that everything lined up right.</p>
 
-<p>The lens mouse illustrator files are included as lens_mount.ai<br/>
+Here's the cuts for the frame as they came out:
+
+<div class="imaging">
+<img src="cuts.jpg"/>
+</div>
+
+Here's what the holders look like close up.
+
+<div class="imaging">
+<img src="lens_mount1.jpg"/>
+</div>
+
+You can see how the ADNS5050 is behind the lens, with the wires soldered in place:
+
+<div class="imaging">
+<img src="lens_mount2.jpg"/>
+</div>
+
+The lens mouse illustrator files are included as lens_mount.ai<br/>
 The body of the field recorder is shown in shape_pattern.ai<br/>
-It's fairly rough right now, v2 is going to have a better shaped body.</p>
+It's fairly rough right now, v2 is going to have a better shaped body.
 
 </div>
 
@@ -111,7 +155,35 @@ It's fairly rough right now, v2 is going to have a better shaped body.</p>
 <p>The Teensy sits on the body, with all the wiring and 4 AA batteries. The teensy can't handle a 9V battery, so don't plug one into it. The lens+ADNS assembly slots into the little cutout at the end. Right now I have it so it's fit tight with the 2 sheets of 2mm acrylic that make up my assembly, but whatever holds it perpendicular to the wall and doesn't allow it to move is just fine. The body is then slid over the bottom of the spray paint can and held into place with some pieces of tape. I also added some  into place (tape not neccessary, but recommended).
 </p>
 
-<p>The capacitive sensor uses a piece of foil to read the touches when the user is actually making a line. You should put near the top of the can so that it's easy to spray and signal to the recorder that you're making a line at the same time.</p>
+The 9DOF is mounted along the side the can where there's room.
+
+<div class="imaging">
+<img src="9DOF_mount.jpg"/>
+</div>
+
+It's pretty important how this thing is mounted because it affects the positioning data that you'll get back. In the code you might note this:
+
+<p class="code">
+  if(abs(p) > 0.1) /// some arbitrary-ish noise amount <br/>
+  {<br/>
+    &nbsp;&nbsp;&nbsp;xRot = sin(ypr[1] + (TWO_PI));<br/>
+    &nbsp;&nbsp;&nbsp;yRot = cos(ypr[1] + (TWO_PI));<br/>
+    &nbsp;&nbsp;&nbsp;position[0] += xRot;<br/>
+    &nbsp;&nbsp;&nbsp;position[1] -= yRot;<br/>
+    <br/>
+  }<br/>
+</p>
+
+That's actually dependent on the positioning of the 9DOF so if you move it, those'll need to be different.
+
+<p>The capacitive sensor uses a piece of foil to read the touches when the user is actually making a line. You should put near the top of the can so that it's easy to spray and signal to the recorder that you're making a line at the same time. How about the actual tag trigger? Pretty straightforward: </p>
+
+<div class="imaging">
+	<img src="tag_trigger.jpg"/>
+</div>
+
+Yep, that's copper tape with a wire soldered to it and that's all you need.
+
 </div>
 
 <div class="heading">

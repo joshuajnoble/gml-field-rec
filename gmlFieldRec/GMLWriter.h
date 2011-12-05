@@ -22,8 +22,8 @@ public:
 
   int init();
 
-  void beginDrawing();
-  bool endDrawing();
+  int beginDrawing();
+  int endDrawing();
 
   void beginStroke();
   void endStroke();

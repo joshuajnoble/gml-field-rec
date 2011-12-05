@@ -28,29 +28,6 @@ int GMLWriter::init()
     sd.initErrorHalt();
     return -1;
   }
-
-  // first check that we don't already have stuff on the card - critical
-  int n = 1;
-  char name[8];
-
-  String s = n;
-  s += ".GML";
-
-  Serial.print(" doesnt ");
-  Serial.print( s.c_str() );
-  
-  while( sd.exists( s.c_str() )) 
-  {
-    Serial.print(" exists ");
-    n++;
-    s = n;
-    s += ".GML";
-  }
-
-  if(!file.open(s.c_str(), O_WRITE | O_CREAT )) {
-    sd.errorHalt("can't create new file");
-    return -1;
-  }
   return 1;
 }
 
@@ -64,16 +41,41 @@ void GMLWriter::endStroke() {
   file.write("</stroke>");
 }
 
-void GMLWriter::beginDrawing() {
+int GMLWriter::beginDrawing() {
 
+  
+    // first check that we don't already have stuff on the card - critical
+  int n = 1;
+
+  String s = n;
+  s += ".xml";
+  
+  while( sd.exists( s.c_str() )) 
+  {
+    n++;
+    s = n;
+    s += ".xml";
+  }
+
+  if(!file.open(s.c_str(), O_WRITE | O_CREAT )) {
+    //sd.errorHalt("can't create new file");
+    return -1;
+  }
+  
   file.write(tagBegin);
+  
+  return 1;
 }
 
-bool GMLWriter::endDrawing() {
+int GMLWriter::endDrawing() {
 
   file.write(tagEnd);
 
-  return file.close();
+  if(file.close()) {
+    return 1;
+  } else {
+    return -1;
+  }
 }
 
 void GMLWriter::addPoint( float x, float y, float time ) {	
