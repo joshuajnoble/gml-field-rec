@@ -14,13 +14,13 @@
 #define __AVR_AT90USB1286__
 // #define __AVR_ATmega328P__ // Arduino Uno
 
-#define DEBUG
+//#define DEBUG
 
-#ifdef DEBUG
-  const int CAP_LIM = 2000;
-#else
+//#ifdef DEBUG
+//  const int CAP_LIM = 2000;
+//#else ifndef DEBUG
   const int CAP_LIM = 500;
-#endif
+//#endif
 
 #include "DebugUtils.h"
 #include "FreeIMU.h"
@@ -37,6 +37,7 @@
 #define NCS                 13
 
 #define ILLUMINATION_LED 24
+#define LASER_LED 19
 
 // STATE
 int state;
@@ -51,8 +52,8 @@ long debounce;
 //#define CAN_HEIGHT_600ML 28.4 // height of a 600ML molotow can in CM
 //#define CAN_HEIGHT_12OZ 26
 
-#define CAN_HEIGHT_600ML 28.4 // height of a 600ML molotow can in CM
-#define CAN_HEIGHT_12OZ 26
+//#define CAN_HEIGHT_600ML 14.2 // height of a 600ML molotow can in CM
+#define CAN_HEIGHT_600ML 2
 
 ADNS5050 omouse(SCLK, SDIO, NCS, RESET_PIN); // might want to shift this over to non-PWM pins?
 GMLWriter gml;
@@ -78,10 +79,11 @@ CapSense listenCap = CapSense(34, 30);
 void setup()
 {
 
-  Serial.begin( 9600 );
+  //Serial.begin( 9600 );
   
   omouse.sync(); // this takes a second
   
+  pinMode( LASER_LED, OUTPUT);
   pinMode( ILLUMINATION_LED, OUTPUT );
   pinMode(TAG_PIN, INPUT);
 
@@ -103,10 +105,10 @@ void setup()
   debounce = millis();
 
   int ret = gml.init();
-  Serial.print( ret );
+  //Serial.print( ret );
   if(ret != 1) { // i.e. if it fails
 
-    Serial.println(" GML not intialized ");
+    //Serial.println(" GML not intialized ");
 
     int i;
     for(i = 0; i<5; i++) { // 5 blinks = not ok
@@ -131,7 +133,7 @@ void setup()
   
   // FREEIMU set up
   Wire.begin();
-  Serial.println( " set pu  ");
+  //Serial.println( " set pu  ");
   delay(5);
   imu.init(); // the parameter enable or disable fast mode
   delay(5);
@@ -143,16 +145,15 @@ void loop()
 
   if(state == INIT)
   {
-    //delay(10);
     if(digitalRead(TAG_PIN) && millis() - debounce > 500) {
 
       debounce = millis();
 
-      Serial.println(" start tagging ");
+      //Serial.println(" start tagging ");
 
       if( gml.beginDrawing() != 1 ) {
         
-        Serial.print(" can't begin drawing ");
+        //Serial.print(" can't begin drawing ");
         
         int i;
         for(i = 0; i<5; i++) { // 5 blinks = not ok
@@ -168,6 +169,7 @@ void loop()
       
       digitalWrite(TAGGING_LED, HIGH); // know you're tagging
       digitalWrite( ILLUMINATION_LED, HIGH );
+      digitalWrite( LASER_LED, HIGH);
 
       return;
     }
@@ -175,23 +177,23 @@ void loop()
   else if (state == TAGGING)
   {
     //delay(10);
-    //Serial.println(" TAGGING ");
+    ////Serial.println(" TAGGING ");
     tagStart = millis();
 
     if(digitalRead(TAG_PIN) && millis() - debounce > 500) {
       debounce = millis();
-      Serial.println(" tag pin ");
+      //Serial.println(" tag pin ");
       state = FINISH_TAG;
     }
    
    byte sqty = omouse.surfaceQuality();
    if(sqty != -1) { // sometimes this just returns nothing
-     surfQuality = 40 - sqty;
+     surfQuality = 80 - (sqty * 4);
    }
    
     if(surfQuality < 2) {
       digitalWrite(SQUAL_LED, HIGH);
-    } else if(millis() - lastSurfBlink > surfQuality * 2) {
+    } else if(millis() - lastSurfBlink > surfQuality) {
       lastSurfBlink = millis();
       digitalWrite(SQUAL_LED, squalPin);
       squalPin = !squalPin;
@@ -214,23 +216,23 @@ void loop()
   {
     determinePosition();
 
-    //Serial.println( omouse.surfaceQuality(), DEC );
+    ////Serial.println( omouse.surfaceQuality(), DEC );
     
    byte sqty = omouse.surfaceQuality();
-   if(sqty != -1) { // sometimes this just returns nothing
-     surfQuality = 40 - sqty;
+   if(sqty > 0) { // sometimes this just returns nothing
+     surfQuality = 80 - (sqty * 4);
    }
     
     if(surfQuality < 2) {
       digitalWrite(SQUAL_LED, HIGH);
-    } else if(millis() - lastSurfBlink > surfQuality * 2) {
+    } else if(millis() - lastSurfBlink > surfQuality) {
       lastSurfBlink = millis();
       digitalWrite(SQUAL_LED, squalPin);
       squalPin = !squalPin;
     }
     
     int cap = listenCap.capSense(10);
-    if(cap > CAP_LIM || cap < -1)
+    if(cap > CAP_LIM || cap < 0)
     {
 
       if( abs(pposition[0] - position[0]) > 1.0 ||  abs(pposition[1] - position[1]) > 1.0) {
@@ -256,10 +258,11 @@ void loop()
     //if(gml.endDrawing()) {
 
     digitalWrite( ILLUMINATION_LED, LOW );
+    digitalWrite( LASER_LED, LOW);
 
     if(gml.endDrawing()) {
 
-      Serial.println(" FINISH_TAG OK ");
+      //Serial.println(" FINISH_TAG OK ");
 
       digitalWrite(TAGGING_LED, LOW); // know you're tagging
       digitalWrite( SDCARD_LED, HIGH);
@@ -273,7 +276,7 @@ void loop()
 
     } else {
 
-      Serial.println(" FINISH_TAG NOT OK ");
+      //Serial.println(" FINISH_TAG NOT OK ");
 
       digitalWrite(TAGGING_LED, LOW); // know you're tagging
 
@@ -311,8 +314,8 @@ void determinePosition()
     //xRot = sin(ypr[1] * (PI/180.0) + (TWO_PI));
     //yRot = cos(ypr[1] * (PI/180.0) + (TWO_PI));
 
-    xRot = sin(ypr[1] + (TWO_PI));
-    yRot = cos(ypr[1] + (TWO_PI));
+    xRot = sin(ypr[1] + (TWO_PI)) * CAN_HEIGHT_600ML;
+    yRot = cos(ypr[1] + (TWO_PI)) * CAN_HEIGHT_600ML;
     
     position[0] -= xRot;
     position[1] -= yRot;
@@ -323,11 +326,11 @@ void determinePosition()
   prevYpr[1] = ypr[1];
   prevYpr[2] = ypr[2];
 
-  Serial.print(ypr[1]);
-  Serial.print(" ");
-  Serial.print(position[0]);
-  Serial.print(" " );
-  Serial.println(position[1]);
+  /*Serial.print(ypr[1]);
+  //Serial.print(" ");
+  //Serial.print(position[0]);
+  //Serial.print(" " );
+  //Serial.println(position[1]);*/
 
 }
 

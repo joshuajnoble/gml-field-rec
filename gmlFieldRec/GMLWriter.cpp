@@ -10,7 +10,7 @@
 #include "GMLWriter.h"
 
 //const char GMLWriter::tagBegin[80] = "<gml spec='1.0'><client><name>GML Field Recorder</name></client><tag><drawing>";
-const char GMLWriter::tagBegin[96] = "<gml spec='1.0'><header><client><name>GML Field Recorder</name></client></header><tag><drawing>";
+const char GMLWriter::tagBegin[138] = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><gml spec='1.0'><header><client><name>GML Field Recorder</name></client></header><tag><drawing>";
 const char GMLWriter::tagEnd[23] = "</drawing></tag></gml>";
 
 GMLWriter::GMLWriter() {
