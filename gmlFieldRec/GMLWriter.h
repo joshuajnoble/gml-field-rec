@@ -2,9 +2,6 @@
  *  gml_writer.h
  *  
  *
- *  Created by base on 30/09/11.
- *  Copyright 2011 __MyCompanyName__. All rights reserved.
- *
  */
 
 #ifndef GML_WRITER
